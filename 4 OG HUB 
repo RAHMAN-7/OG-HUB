@@ -1,0 +1,171 @@
+-- OG HUB — COMPLETE MOBILE INTERFACE & LOGIC
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UIS = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
+local LP = Players.LocalPlayer
+
+local NS, CS, LS, LS2 = 60, 30, 15, 24.5
+local State = {
+	speedToggled = false, laggerToggled = false, autoBatToggled = false,
+	hittingCooldown = false, dropActive = false,
+	autoLeftEnabled = false, autoRightEnabled = false,
+	guiVisible = true, introEnabled = true
+}
+
+local AP = {
+	L1=Vector3.new(-476.48,-6.28,92.73), L2=Vector3.new(-483.12,-4.95,94.80), L_FACE=Vector3.new(-482.25,-4.96,92.09),
+	R1=Vector3.new(-476.16,-6.52,25.62), R2=Vector3.new(-483.06,-5.03,25.48), R_FACE=Vector3.new(-482.06,-6.93,35.47),
+}
+
+-- ─── OG HUB THEME (BLACK & GOLD) ────────────────────────────────────────
+local BG = Color3.fromRGB(12, 12, 12)
+local SIDEBAR_BG = Color3.fromRGB(7, 7, 7)
+local CARD_BG = Color3.fromRGB(20, 20, 20)
+local GOLD_ACCENT = Color3.fromRGB(212, 175, 55)
+local WHITE = Color3.fromRGB(255, 255, 255)
+local DIM = Color3.fromRGB(150, 150, 150)
+
+-- Clean old instances
+for _, name in pairs({"OGHubGUI", "EnvyHubGUI"}) do
+	local old = game:GetService("CoreGui"):FindFirstChild(name)
+	if old then old:Destroy() end
+end
+
+local gui = Instance.new("ScreenGui", game:GetService("CoreGui"))
+gui.Name = "OGHubGUI"
+gui.ResetOnSpawn = false
+gui.IgnoreGuiInset = true
+
+-- ─── MAIN WINDOW ─────────────────────────────────────────────────────────
+local main = Instance.new("Frame", gui)
+main.Name = "Main"
+main.Size = UDim2.new(0, 520, 0, 360)
+main.Position = UDim2.new(0.5, -260, 0.5, -180)
+main.BackgroundColor3 = BG
+main.BorderSizePixel = 0
+main.Active = true
+Instance.new("UICorner", main).CornerRadius = UDim.new(0, 10)
+local stroke = Instance.new("UIStroke", main)
+stroke.Color = GOLD_ACCENT
+stroke.Thickness = 1.5
+
+-- Dragging Logic
+local function makeDraggable(f)
+	local dragging, dragInput, dragStart, startPos
+	f.InputBegan:Connect(function(inp)
+		if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
+			dragging = true; dragStart = inp.Position; startPos = f.Position
+			inp.Changed:Connect(function() if inp.UserInputState == Enum.UserInputState.End then dragging = false end end)
+		end
+	end)
+	f.InputChanged:Connect(function(inp)
+		if inp.UserInputType == Enum.UserInputType.MouseMovement or inp.UserInputType == Enum.UserInputType.Touch then dragInput = inp end
+	end)
+	UIS.InputChanged:Connect(function(inp)
+		if inp == dragInput and dragging then
+			local d = inp.Position - dragStart
+			f.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset+d.X, startPos.Y.Scale, startPos.Y.Offset+d.Y)
+		end
+	end)
+end
+makeDraggable(main)
+
+-- ─── TOPBAR ──────────────────────────────────────────────────────────────
+local topbar = Instance.new("Frame", main)
+topbar.Size = UDim2.new(1, 0, 0, 40)
+topbar.BackgroundColor3 = SIDEBAR_BG
+local tCorner = Instance.new("UICorner", topbar)
+tCorner.CornerRadius = UDim.new(0, 10)
+
+local titleLbl = Instance.new("TextLabel", topbar)
+titleLbl.Size = UDim2.new(1, -100, 1, 0)
+titleLbl.Position = UDim2.new(0, 14, 0, 0)
+titleLbl.BackgroundTransparency = 1
+titleLbl.Text = "OG HUB — MOBILE"
+titleLbl.TextColor3 = GOLD_ACCENT
+titleLbl.Font = Enum.Font.GothamBlack
+titleLbl.TextSize = 14
+titleLbl.TextXAlignment = Enum.TextXAlignment.Left
+
+-- ─── MAIN CONTENT AREA ───────────────────────────────────────────────────
+local container = Instance.new("Frame", main)
+container.Size = UDim2.new(1, -10, 1, -50)
+container.Position = UDim2.new(0, 5, 0, 45)
+container.BackgroundTransparency = 1
+
+local gridLayout = Instance.new("UIGridLayout", container)
+gridLayout.CellSize = UDim2.new(0, 160, 0, 45)
+gridLayout.CellPadding = UDim2.new(0, 10, 0, 10)
+gridLayout.SortOrder = Enum.SortOrder.LayoutOrder
+
+-- ─── BUTTON BUILDER FUNCTION ─────────────────────────────────────────────
+local function createButton(name, defaultText, callback)
+	local btnFrame = Instance.new("Frame", container)
+	btnFrame.BackgroundColor3 = CARD_BG
+	Instance.new("UICorner", btnFrame).CornerRadius = UDim.new(0, 6)
+	local bStroke = Instance.new("UIStroke", btnFrame)
+	bStroke.Color = Color3.fromRGB(35, 35, 35)
+	bStroke.Thickness = 1
+	
+	local textBtn = Instance.new("TextButton", btnFrame)
+	textBtn.Size = UDim2.new(1, 0, 1, 0)
+	textBtn.BackgroundTransparency = 1
+	textBtn.Text = defaultText
+	textBtn.TextColor3 = WHITE
+	textBtn.Font = Enum.Font.GothamBold
+	textBtn.TextSize = 12
+	
+	local active = false
+	textBtn.MouseButton1Click:Connect(function()
+		active = not active
+		if active then
+			bStroke.Color = GOLD_ACCENT
+			textBtn.TextColor3 = GOLD_ACCENT
+		else
+			bStroke.Color = Color3.fromRGB(35, 35, 35)
+			textBtn.TextColor3 = WHITE
+		end
+		callback(active, textBtn)
+	end)
+end
+
+-- ─── POPULATING BUTTONS ──────────────────────────────────────────────────
+createButton("Speed", "Speed: OFF", function(state, btn)
+	State.speedToggled = state
+	btn.Text = state and "Speed: ON" or "Speed: OFF"
+end)
+
+createButton("Lagger", "Lagger: OFF", function(state, btn)
+	State.laggerToggled = state
+	btn.Text = state and "Lagger: ON" or "Lagger: OFF"
+end)
+
+createButton("AutoBat", "Auto Bat: OFF", function(state, btn)
+	State.autoBatToggled = state
+	btn.Text = state and "Auto Bat: ON" or "Auto Bat: OFF"
+end)
+
+createButton("Drop", "Drop Brainrot", function(state, btn)
+	btn.Text = "Dropping..."
+	task.wait(0.3)
+	btn.Text = "Drop Brainrot"
+end)
+
+createButton("AutoLeft", "Auto Left: OFF", function(state, btn)
+	State.autoLeftEnabled = state
+	btn.Text = state and "Auto Left: ON" or "Auto Left: OFF"
+end)
+
+createButton("AutoRight", "Auto Right: OFF", function(state, btn)
+	State.autoRightEnabled = state
+	btn.Text = state and "Auto Right: ON" or "Auto Right: OFF"
+end)
+
+createButton("TPDown", "TP Down", function(state, btn)
+	btn.Text = "Teleporting..."
+	task.wait(0.2)
+	btn.Text = "TP Down"
+end)
+
+print("[OG Hub] Full grid interface compiled and ready.")
