@@ -1,19 +1,23 @@
--- OG HUB — FULL AUTHENTIC UI RECONSTRUCTION WITH MOBILE PAD
+-- OG HUB — FULL FIXED UTILITY HUB WITH FUNCTIONAL TOGGLES
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UIS = game:GetService("UserInputService")
-local TweenService = game:GetService("TweenService")
 local LP = Players.LocalPlayer
 
--- Configurations MATCHING 12143.jpg EXACTLY
+-- Configurations & States
 local NS, CS, LS, LS2 = 59, 29, 15, 24.5
 local State = {
-	speedToggled = false, laggerToggled = false, autoBatToggled = false,
-	infJumpEnabled = false, antiRagdollEnabled = false, fpsBoostEnabled = false,
-	antiLagEnabled = false, guiVisible = true, autoLeftEnabled = false, autoRightEnabled = false,
+	speedToggled = false,
+	laggerToggled = false,
+	autoBatToggled = false,
+	infJumpEnabled = false,
+	antiRagdollEnabled = false,
+	autoLeftEnabled = false,
+	autoRightEnabled = false,
+	guiVisible = true
 }
 
--- Clean older UI layers
+-- Clean older instances
 for _, name in pairs({"OGHubGUI", "EnvyHubGUI"}) do
 	local old = game:GetService("CoreGui"):FindFirstChild(name)
 	if old then old:Destroy() end
@@ -24,7 +28,7 @@ gui.Name = "OGHubGUI"
 gui.ResetOnSpawn = false
 gui.IgnoreGuiInset = true
 
--- ─── MAIN WINDOW DESIGN (MATCHING INTERFACE IN 12143.jpg) ─────────────────
+-- ─── MAIN WINDOW DESIGN ─────────────────────────────────────────────
 local main = Instance.new("Frame", gui)
 main.Name = "Main"
 main.Size = UDim2.new(0, 560, 0, 380)
@@ -35,30 +39,26 @@ main.Active = true
 Instance.new("UICorner", main).CornerRadius = UDim.new(0, 10)
 local mStroke = Instance.new("UIStroke", main)
 mStroke.Color = Color3.fromRGB(35, 35, 35)
-mStroke.Thickness = 1
 
--- Dragging Engine
-local function makeDraggable(f)
-	local dragging, dragInput, dragStart, startPos
-	f.InputBegan:Connect(function(inp)
-		if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
-			dragging = true; dragStart = inp.Position; startPos = f.Position
-			inp.Changed:Connect(function() if inp.UserInputState == Enum.UserInputState.End then dragging = false end end)
-		end
-	end)
-	f.InputChanged:Connect(function(inp)
-		if inp.UserInputType == Enum.UserInputType.MouseMovement or inp.UserInputType == Enum.UserInputType.Touch then dragInput = inp end
-	end)
-	UIS.InputChanged:Connect(function(inp)
-		if inp == dragInput and dragging then
-			local d = inp.Position - dragStart
-			f.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset+d.X, startPos.Y.Scale, startPos.Y.Offset+d.Y)
-		end
-	end)
-end
-makeDraggable(main)
+-- Simple Dragging
+local dragging, dragInput, dragStart, startPos
+main.InputBegan:Connect(function(inp)
+	if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
+		dragging = true; dragStart = inp.Position; startPos = main.Position
+		inp.Changed:Connect(function() if inp.UserInputState == Enum.UserInputState.End then dragging = false end end)
+	end
+end)
+main.InputChanged:Connect(function(inp)
+	if inp.UserInputType == Enum.UserInputType.MouseMovement or inp.UserInputType == Enum.UserInputType.Touch then dragInput = inp end
+end)
+UIS.InputChanged:Connect(function(inp)
+	if inp == dragInput and dragging then
+		local d = inp.Position - dragStart
+		main.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset+d.X, startPos.Y.Scale, startPos.Y.Offset+d.Y)
+	end
+end)
 
--- Top Window Bar Details
+-- Top Bar Header (With updated Discord Link)
 local topbar = Instance.new("Frame", main)
 topbar.Size = UDim2.new(1, 0, 0, 36)
 topbar.BackgroundTransparency = 1
@@ -74,16 +74,16 @@ titleLbl.TextSize = 14
 titleLbl.TextXAlignment = Enum.TextXAlignment.Left
 
 local subTitle = Instance.new("TextLabel", topbar)
-subTitle.Size = UDim2.new(0, 150, 1, 0)
+subTitle.Size = UDim2.new(0, 200, 1, 0)
 subTitle.Position = UDim2.new(0, 95, 0, 0)
 subTitle.BackgroundTransparency = 1
-subTitle.Text = "discord.gg/oghv"
+subTitle.Text = "discord.gg/WkTmWrXYh"
 subTitle.TextColor3 = Color3.fromRGB(140, 140, 140)
 subTitle.Font = Enum.Font.GothamSemibold
 subTitle.TextSize = 10
 subTitle.TextXAlignment = Enum.TextXAlignment.Left
 
--- Minimize button
+-- Minimize
 local minBtn = Instance.new("TextButton", topbar)
 minBtn.Size = UDim2.new(0, 24, 0, 24)
 minBtn.Position = UDim2.new(1, -34, 0.5, -12)
@@ -91,15 +91,9 @@ minBtn.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
 minBtn.Text = "-"
 minBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 minBtn.Font = Enum.Font.GothamBold
-minBtn.TextSize = 14
 Instance.new("UICorner", minBtn).CornerRadius = UDim.new(0, 6)
 
-minBtn.MouseButton1Click:Connect(function()
-	State.guiVisible = not State.guiVisible
-	main.Visible = State.guiVisible
-end)
-
--- Left Graphic Artwork Panel
+-- Image Banner Left Side
 local artPanel = Instance.new("Frame", main)
 artPanel.Size = UDim2.new(0, 110, 1, -46)
 artPanel.Position = UDim2.new(0, 12, 0, 40)
@@ -108,11 +102,10 @@ Instance.new("UICorner", artPanel).CornerRadius = UDim.new(0, 6)
 local artImg = Instance.new("ImageLabel", artPanel)
 artImg.Size = UDim2.new(1, 0, 1, 0)
 artImg.BackgroundTransparency = 1
-artImg.Image = "rbxassetid://10849683765" -- Universal cool background decal tint
+artImg.Image = "rbxassetid://10849683765"
 artImg.ScaleType = Enum.ScaleType.Crop
 Instance.new("UICorner", artImg).CornerRadius = UDim.new(0, 6)
 
--- Sidebar Buttons Center Layout
 local sidebar = Instance.new("Frame", main)
 sidebar.Size = UDim2.new(0, 110, 1, -46)
 sidebar.Position = UDim2.new(0, 130, 0, 40)
@@ -120,7 +113,6 @@ sidebar.BackgroundTransparency = 1
 local sideLayout = Instance.new("UIListLayout", sidebar)
 sideLayout.Padding = UDim.new(0, 5)
 
--- Content Box Frame
 local contentFrame = Instance.new("Frame", main)
 contentFrame.Size = UDim2.new(1, -260, 1, -46)
 contentFrame.Position = UDim2.new(0, 250, 0, 40)
@@ -152,8 +144,7 @@ local function registerTab(name)
 	btn.Font = Enum.Font.GothamBold
 	btn.TextSize = 11
 	Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
-	local bStr = Instance.new("UIStroke", btn)
-	bStr.Color = Color3.fromRGB(35, 35, 35)
+	Instance.new("UIStroke", btn).Color = Color3.fromRGB(35, 35, 35)
 	
 	btn.MouseButton1Click:Connect(function()
 		for _, t in pairs(tabs) do
@@ -169,15 +160,12 @@ local function registerTab(name)
 	
 	tabs[name] = { S = scroll, B = btn }
 	if not activeTab then
-		scroll.Visible = true
-		btn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-		btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-		activeTab = name
+		scroll.Visible = true; btn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+		btn.TextColor3 = Color3.fromRGB(255, 255, 255); activeTab = name
 	end
 	return scroll
 end
 
--- Create the complete 6 tabs from image 12143.jpg
 local speedTab = registerTab("Speed")
 local batTab   = registerTab("Bat Aimbot")
 local mechTab  = registerTab("Mechanics")
@@ -185,13 +173,12 @@ local moveTab  = registerTab("Movement")
 local perfTab  = registerTab("Performance")
 local setTab   = registerTab("Settings")
 
--- ─── COMPONENT UI GENERATORS ─────────────────────────────────────────────
-local function addValueCard(tab, label, default)
+-- UI Component Generators
+local function addValueCard(tab, label, default, setCallback)
 	local c = Instance.new("Frame", tab)
 	c.Size = UDim2.new(1, 0, 0, 42)
 	c.BackgroundColor3 = Color3.fromRGB(16, 16, 16)
 	Instance.new("UICorner", c).CornerRadius = UDim.new(0, 6)
-	Instance.new("UIStroke", c).Color = Color3.fromRGB(30, 30, 30)
 	
 	local tl = Instance.new("TextLabel", c)
 	tl.Size = UDim2.new(0, 150, 1, 0)
@@ -212,15 +199,17 @@ local function addValueCard(tab, label, default)
 	box.Font = Enum.Font.GothamBold
 	box.TextSize = 11
 	Instance.new("UICorner", box).CornerRadius = UDim.new(0, 4)
-	return box
+	box.FocusLost:Connect(function()
+		local val = tonumber(box.Text)
+		if val then setCallback(val) end
+	end)
 end
 
-local function addToggleCard(tab, label, desc, default, callback)
+local function addToggleCard(tab, label, desc, stateKey, updateUiCallback)
 	local c = Instance.new("Frame", tab)
 	c.Size = UDim2.new(1, 0, 0, 46)
 	c.BackgroundColor3 = Color3.fromRGB(16, 16, 16)
 	Instance.new("UICorner", c).CornerRadius = UDim.new(0, 6)
-	Instance.new("UIStroke", c).Color = Color3.fromRGB(30, 30, 30)
 	
 	local tl = Instance.new("TextLabel", c)
 	tl.Size = UDim2.new(0, 200, 0, 18)
@@ -245,34 +234,24 @@ local function addToggleCard(tab, label, desc, default, callback)
 	local btn = Instance.new("TextButton", c)
 	btn.Size = UDim2.new(0, 36, 0, 18)
 	btn.Position = UDim2.new(1, -48, 0.5, -9)
-	btn.BackgroundColor3 = default and Color3.fromRGB(212, 175, 55) or Color3.fromRGB(28, 28, 28)
+	btn.BackgroundColor3 = State[stateKey] and Color3.fromRGB(212, 175, 55) or Color3.fromRGB(28, 28, 28)
 	btn.Text = ""
 	Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 9)
 	
-	local active = default
 	btn.MouseButton1Click:Connect(function()
-		active = not active
-		btn.BackgroundColor3 = active and Color3.fromRGB(212, 175, 55) or Color3.fromRGB(28, 28, 28)
-		if callback then callback(active) end
+		State[stateKey] = not State[stateKey]
+		btn.BackgroundColor3 = State[stateKey] and Color3.fromRGB(212, 175, 55) or Color3.fromRGB(28, 28, 28)
+		if updateUiCallback then updateUiCallback() end
 	end)
 end
 
--- Populate tab panels directly from screenshots
-addValueCard(speedTab, "Normal Speed", 59).FocusLost:Connect(function(e) NS = tonumber(e) or NS end)
-addValueCard(speedTab, "Carry Speed", 29).FocusLost:Connect(function(e) CS = tonumber(e) or CS end)
-addValueCard(speedTab, "Lagger Speed", 15).FocusLost:Connect(function(e) LS = tonumber(e) or LS end)
-addValueCard(speedTab, "Lagger Carry Speed", 24.5).FocusLost:Connect(function(e) LS2 = tonumber(e) or LS2 end)
+-- Assign Configuration Links
+addValueCard(speedTab, "Normal Speed", NS, function(v) NS = v end)
+addValueCard(speedTab, "Carry Speed", CS, function(v) CS = v end)
+addValueCard(speedTab, "Lagger Speed", LS, function(v) LS = v end)
+addValueCard(speedTab, "Lagger Carry Speed", LS2, function(v) LS2 = v end)
 
-addToggleCard(batTab, "Auto Bat Combat", "Aimbot checks target distances", false, function(v) State.autoBatToggled = v end)
-addToggleCard(mechTab, "Infinite Jump", "Allows air jump metrics", false, function(v) State.infJumpEnabled = v end)
-addToggleCard(mechTab, "Anti Ragdoll", "Keeps player vector upright", false, function(v) State.antiRagdollEnabled = v end)
-
-addToggleCard(moveTab, "Auto Left Corridor", "Bypasses left walls", false, function(v) State.autoLeftEnabled = v end)
-addToggleCard(moveTab, "Auto Right Corridor", "Bypasses right walls", false, function(v) State.autoRightEnabled = v end)
-addToggleCard(perfTab, "FPS Optimization", "Removes detailed map textures", false, function(v) end)
-addToggleCard(setTab, "UI Toggle Hud visibility", "Hides master control base window", true, function(v) end)
-
--- ─── MOBILE ACCESSIBLE ACTION BUTTONS (PAD ON THE RIGHT PANEL) ───────────
+-- ─── MOBILE HUD OVERLAY BUTTON PAD (RIGHT PANEL IN 12149.jpg) ───────────
 local buttonPad = Instance.new("Frame", gui)
 buttonPad.Name = "MobilePad"
 buttonPad.Size = UDim2.new(0, 180, 0, 360)
@@ -283,7 +262,9 @@ local padGrid = Instance.new("UIGridLayout", buttonPad)
 padGrid.CellSize = UDim2.new(0, 82, 0, 48)
 padGrid.CellPadding = UDim2.new(0, 10, 0, 10)
 
-local function buildPadButton(text, clickCallback)
+local padButtons = {}
+
+local function buildPadButton(text, stateKey, actionCallback)
 	local b = Instance.new("TextButton", buttonPad)
 	b.BackgroundColor3 = Color3.fromRGB(12, 12, 12)
 	b.Text = text
@@ -295,65 +276,106 @@ local function buildPadButton(text, clickCallback)
 	local s = Instance.new("UIStroke", b)
 	s.Color = Color3.fromRGB(40, 40, 40)
 	
+	local function updateVisuals()
+		if stateKey and State[stateKey] then
+			b.BackgroundColor3 = Color3.fromRGB(212, 175, 55)
+			b.TextColor3 = Color3.fromRGB(0, 0, 0)
+		else
+			b.BackgroundColor3 = Color3.fromRGB(12, 12, 12)
+			b.TextColor3 = Color3.fromRGB(255, 255, 255)
+		end
+	end
+	
 	b.MouseButton1Click:Connect(function()
-		b.BackgroundColor3 = Color3.fromRGB(212, 175, 55)
-		b.TextColor3 = Color3.fromRGB(0, 0, 0)
-		task.wait(0.12)
-		b.BackgroundColor3 = Color3.fromRGB(12, 12, 12)
-		b.TextColor3 = Color3.fromRGB(255, 255, 255)
-		if clickCallback then clickCallback() end
+		if stateKey then
+			State[stateKey] = not State[stateKey]
+			updateVisuals()
+		else
+			b.BackgroundColor3 = Color3.fromRGB(212, 175, 55)
+			b.TextColor3 = Color3.fromRGB(0, 0, 0)
+			task.wait(0.15)
+			b.BackgroundColor3 = Color3.fromRGB(12, 12, 12)
+			b.TextColor3 = Color3.fromRGB(255, 255, 255)
+		end
+		if actionCallback then actionCallback() end
 	end)
+	
+	padButtons[text] = updateVisuals
+	return b
 end
 
--- Mapping the exact touch grid triggers from image 12143.jpg
-buildPadButton("DROP BR", function() print("Dropping...") end)
-buildPadButton("AUTO LEFT", function() State.autoLeftEnabled = not State.autoLeftEnabled end)
-buildPadButton("BAT AIMBOT", function() State.autoBatToggled = not State.autoBatToggled end)
-buildPadButton("AUTO RIGHT", function() State.autoRightEnabled = not State.autoRightEnabled end)
-buildPadButton("TP DOWN", function() if LP.Character and LP.Character:FindFirstChild("HumanoidRootPart") then LP.Character.HumanoidRootPart.CFrame = LP.Character.HumanoidRootPart.CFrame * CFrame.new(0, -10, 0) end end)
-buildPadButton("CARRY SPD", function() State.speedToggled = not State.speedToggled end)
-buildPadButton("LAGGER CARRY", function() State.laggerToggled = not State.laggerToggled end)
-buildPadButton("LAGGER MODE", function() State.laggerToggled = not State.laggerToggled end)
+local function syncAllPadVisuals()
+	for _, refresh in pairs(padButtons) do refresh() end
+end
 
--- Master open toggle overlay button
-local hudToggle = Instance.new("TextButton", gui)
-hudToggle.Name = "MasterToggle"
-hudToggle.Size = UDim2.new(0, 45, 0, 45)
-hudToggle.Position = UDim2.new(0, 15, 0, 15)
-hudToggle.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
-hudToggle.Text = "OG"
-hudToggle.TextColor3 = Color3.fromRGB(212, 175, 55)
-hudToggle.Font = Enum.Font.GothamBlack
-hudToggle.TextSize = 14
-Instance.new("UICorner", hudToggle).CornerRadius = UDim.new(0, 50)
-local tStr = Instance.new("UIStroke", hudToggle)
-tStr.Color = Color3.fromRGB(212, 175, 55)
-tStr.Thickness = 1.5
+-- Build active buttons from 12149.jpg
+buildPadButton("DROP BR", nil, function() print("Dropping items...") end)
+buildPadButton("AUTO LEFT", "autoLeftEnabled")
+buildPadButton("BAT AIMBOT", "autoBatToggled")
+buildPadButton("AUTO RIGHT", "autoRightEnabled")
+buildPadButton("TP DOWN", nil, function()
+	local root = LP.Character and LP.Character:FindFirstChild("HumanoidRootPart")
+	if root then root.CFrame = root.CFrame * CFrame.new(0, -12, 0) end
+end)
+buildPadButton("CARRY SPD", "speedToggled")
+buildPadButton("LAGGER CARRY", "laggerToggled")
+buildPadButton("LAGGER MODE", "laggerToggled")
 
-hudToggle.MouseButton1Click:Connect(function()
-	main.Visible = not main.Visible
-	buttonPad.Visible = main.Visible
+-- Link tab sliders to update the touch overlay pads
+addToggleCard(batTab, "Auto Bat Combat", "Distance target check", "autoBatToggled", syncAllPadVisuals)
+addToggleCard(mechTab, "Infinite Jump", "Air metric bypasses", "infJumpEnabled", syncAllPadVisuals)
+addToggleCard(mechTab, "Anti Ragdoll", "Maintains upright state", "antiRagdollEnabled", syncAllPadVisuals)
+addToggleCard(moveTab, "Auto Left Corridor", "Bypasses left walls", "autoLeftEnabled", syncAllPadVisuals)
+addToggleCard(moveTab, "Auto Right Corridor", "Bypasses right walls", "autoRightEnabled", syncAllPadVisuals)
+
+-- Toggle Visibility Minimize Action
+minBtn.MouseButton1Click:Connect(function()
+	State.guiVisible = not State.guiVisible
+	main.Visible = State.guiVisible
+	buttonPad.Visible = State.guiVisible
 end)
 
--- ─── MOVEMENT & LOOP ENGINE RUNTIME ──────────────────────────────────────
+-- ─── MOVEMENT RUNTIME CORE ENGINE ─────────────────────────────────────────
 RunService.RenderStepped:Connect(function()
-	local char = LP.Character; local hum = char and char:FindFirstChildOfClass("Humanoid")
+	local char = LP.Character
+	local hum = char and char:FindFirstChildOfClass("Humanoid")
 	local root = char and char:FindFirstChild("HumanoidRootPart")
 	if not hum or not root then return end
 	
-	if not State.autoLeftEnabled and not State.autoRightEnabled and not State.autoBatToggled then
-		local md = hum.MoveDirection
-		if md.Magnitude > 0 then
-			local targetSpeed = State.laggerToggled and LS or (State.speedToggled and CS or NS)
-			root.Velocity = Vector3.new(md.X * targetSpeed, root.Velocity.Y, md.Z * targetSpeed)
+	-- Anti Ragdoll Enforcement
+	if State.antiRagdollEnabled and hum.PlatformStand then
+		hum.PlatformStand = false
+		root.RotVelocity = Vector3.new(0,0,0)
+	end
+	
+	-- Automatic Directional Path Corridors
+	if State.autoLeftEnabled then
+		root.Velocity = Vector3.new(-NS, root.Velocity.Y, root.Velocity.Z)
+		return
+	elseif State.autoRightEnabled then
+		root.Velocity = Vector3.new(NS, root.Velocity.Y, root.Velocity.Z)
+		return
+	end
+	
+	-- Basic Manual WalkSpeed Modifiers (Velocity Override Engine)
+	local md = hum.MoveDirection
+	if md.Magnitude > 0 then
+		local targetSpeed = NS
+		if State.laggerToggled then
+			targetSpeed = LS
+		elseif State.speedToggled then
+			targetSpeed = CS
 		end
+		root.Velocity = Vector3.new(md.X * targetSpeed, root.Velocity.Y, md.Z * targetSpeed)
 	end
 end)
 
+-- Infinite Jump Hook
 UIS.JumpRequest:Connect(function()
 	if not State.infJumpEnabled then return end
-	local char = LP.Character; local root = char and char:FindFirstChild("HumanoidRootPart")
-	if root then root.Velocity = Vector3.new(root.Velocity.X, 50, root.Velocity.Z) end
+	local char = LP.Character
+	local root = char and char:FindFirstChild("HumanoidRootPart")
+	if root then root.Velocity = Vector3.new(root.Velocity.X, 48, root.Velocity.Z) end
 end)
 
-print("[OG Hub] Complete UI and side pads fully built.")
+print("[OG HUB] Live engine initialized successfully with links synced.")
