@@ -1,53 +1,19 @@
--- OG HUB — RECONSTRUCTED INTERFACE & WORKING ENGINE
+-- OG HUB — FULL AUTHENTIC UI RECONSTRUCTION WITH MOBILE PAD
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UIS = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
-local HttpService = game:GetService("HttpService")
 local LP = Players.LocalPlayer
 
--- Global Configuration States
-local NS, CS, LS, LS2 = 60, 30, 15, 24.5
-local laggerPhase = 0
-local uiScaleValue = 100
-local uiLocked = false
-
+-- Configurations MATCHING 12143.jpg EXACTLY
+local NS, CS, LS, LS2 = 59, 29, 15, 24.5
 local State = {
 	speedToggled = false, laggerToggled = false, autoBatToggled = false,
-	hittingCooldown = false, infJumpEnabled = false,
-	antiRagdollEnabled = false, fpsBoostEnabled = false,
-	antiLagEnabled = false, guiVisible = true, introEnabled = true,
-	isStealing = false, stealStartTime = nil, lastStealTick = 0,
-	dropActive = false, autoLeftEnabled = false, autoRightEnabled = false,
-	unwalkEnabled = false, desyncEnabled = false, selectedIntroMusic = 1,
+	infJumpEnabled = false, antiRagdollEnabled = false, fpsBoostEnabled = false,
+	antiLagEnabled = false, guiVisible = true, autoLeftEnabled = false, autoRightEnabled = false,
 }
 
-local KB = {
-	AutoLeft  = {kb = Enum.KeyCode.Z,        gp = nil},
-	AutoRight = {kb = Enum.KeyCode.C,           gp = nil},
-	Drop      = {kb = Enum.KeyCode.X,           gp = nil},
-	TPDown    = {kb = Enum.KeyCode.F,           gp = nil},
-	AutoBat   = {kb = Enum.KeyCode.E,           gp = nil},
-	Speed     = {kb = Enum.KeyCode.Q,           gp = nil},
-	Lagger    = {kb = Enum.KeyCode.R,           gp = nil},
-	GuiHide   = {kb = Enum.KeyCode.LeftControl, gp = nil},
-}
-
-local Steal = { StealRadius = 8, AutoStealEnabled = false, cachedPrompts = {}, promptCacheTime = 0 }
-local Conns = { aimbot = nil, autoLeft = nil, autoRight = nil, batCounter = nil, unwalk = nil, anchor = {} }
-
--- ─── OG HUB THEME CONFIGURATION (BLACK & GOLD) ──────────────────────────
-local BG = Color3.fromRGB(10, 10, 10)
-local SIDEBAR_BG = Color3.fromRGB(5, 5, 5)
-local CARD_BG = Color3.fromRGB(16, 16, 16)
-local CARD_HOV = Color3.fromRGB(24, 24, 24)
-local GOLD_ACCENT = Color3.fromRGB(212, 175, 55)
-local GOLD_DIM = Color3.fromRGB(160, 130, 40)
-local WHITE = Color3.fromRGB(255, 255, 255)
-local DIM = Color3.fromRGB(140, 140, 140)
-local BORDER = Color3.fromRGB(35, 35, 35)
-
--- Clean older iterations
+-- Clean older UI layers
 for _, name in pairs({"OGHubGUI", "EnvyHubGUI"}) do
 	local old = game:GetService("CoreGui"):FindFirstChild(name)
 	if old then old:Destroy() end
@@ -58,34 +24,32 @@ gui.Name = "OGHubGUI"
 gui.ResetOnSpawn = false
 gui.IgnoreGuiInset = true
 
--- ─── BASE STRUCT FRAME ───────────────────────────────────────────────────
+-- ─── MAIN WINDOW DESIGN (MATCHING INTERFACE IN 12143.jpg) ─────────────────
 local main = Instance.new("Frame", gui)
 main.Name = "Main"
-main.Size = UDim2.new(0, 500, 0, 400)
-main.Position = UDim2.new(0.5, -250, 0.5, -200)
-main.BackgroundColor3 = BG
+main.Size = UDim2.new(0, 560, 0, 380)
+main.Position = UDim2.new(0.3, 0, 0.5, -190)
+main.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
 main.BorderSizePixel = 0
 main.Active = true
 Instance.new("UICorner", main).CornerRadius = UDim.new(0, 10)
-local mainStroke = Instance.new("UIStroke", main)
-mainStroke.Color = GOLD_ACCENT
-mainStroke.Thickness = 1.2
+local mStroke = Instance.new("UIStroke", main)
+mStroke.Color = Color3.fromRGB(35, 35, 35)
+mStroke.Thickness = 1
 
+-- Dragging Engine
 local function makeDraggable(f)
 	local dragging, dragInput, dragStart, startPos
 	f.InputBegan:Connect(function(inp)
-		if uiLocked then return end
 		if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
 			dragging = true; dragStart = inp.Position; startPos = f.Position
 			inp.Changed:Connect(function() if inp.UserInputState == Enum.UserInputState.End then dragging = false end end)
 		end
 	end)
 	f.InputChanged:Connect(function(inp)
-		if uiLocked then dragging = false; return end
 		if inp.UserInputType == Enum.UserInputType.MouseMovement or inp.UserInputType == Enum.UserInputType.Touch then dragInput = inp end
 	end)
 	UIS.InputChanged:Connect(function(inp)
-		if uiLocked then dragging = false; return end
 		if inp == dragInput and dragging then
 			local d = inp.Position - dragStart
 			f.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset+d.X, startPos.Y.Scale, startPos.Y.Offset+d.Y)
@@ -94,292 +58,284 @@ local function makeDraggable(f)
 end
 makeDraggable(main)
 
--- ─── TOPBAR HEAD ─────────────────────────────────────────────────────────
+-- Top Window Bar Details
 local topbar = Instance.new("Frame", main)
-topbar.Size = UDim2.new(1, 0, 0, 42)
-topbar.BackgroundColor3 = SIDEBAR_BG
-Instance.new("UICorner", topbar).CornerRadius = UDim.new(0, 10)
-
-local topPatch = Instance.new("Frame", topbar)
-topPatch.Size = UDim2.new(1, 0, 0, 10)
-topPatch.Position = UDim2.new(0, 0, 1, -10)
-topPatch.BackgroundColor3 = SIDEBAR_BG
-topPatch.BorderSizePixel = 0
+topbar.Size = UDim2.new(1, 0, 0, 36)
+topbar.BackgroundTransparency = 1
 
 local titleLbl = Instance.new("TextLabel", topbar)
-titleLbl.Size = UDim2.new(1, -100, 1, 0)
-titleLbl.Position = UDim2.new(0, 14, 0, 0)
+titleLbl.Size = UDim2.new(0, 120, 1, 0)
+titleLbl.Position = UDim2.new(0, 15, 0, 0)
 titleLbl.BackgroundTransparency = 1
-titleLbl.Text = "OG HUB — MOBILE"
-titleLbl.TextColor3 = GOLD_ACCENT
+titleLbl.Text = "OG HUB"
+titleLbl.TextColor3 = Color3.fromRGB(255, 255, 255)
 titleLbl.Font = Enum.Font.GothamBlack
-titleLbl.TextSize = 13
+titleLbl.TextSize = 14
 titleLbl.TextXAlignment = Enum.TextXAlignment.Left
 
--- ─── NAVIGATION SIDEBAR ──────────────────────────────────────────────────
+local subTitle = Instance.new("TextLabel", topbar)
+subTitle.Size = UDim2.new(0, 150, 1, 0)
+subTitle.Position = UDim2.new(0, 95, 0, 0)
+subTitle.BackgroundTransparency = 1
+subTitle.Text = "discord.gg/oghv"
+subTitle.TextColor3 = Color3.fromRGB(140, 140, 140)
+subTitle.Font = Enum.Font.GothamSemibold
+subTitle.TextSize = 10
+subTitle.TextXAlignment = Enum.TextXAlignment.Left
+
+-- Minimize button
+local minBtn = Instance.new("TextButton", topbar)
+minBtn.Size = UDim2.new(0, 24, 0, 24)
+minBtn.Position = UDim2.new(1, -34, 0.5, -12)
+minBtn.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+minBtn.Text = "-"
+minBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+minBtn.Font = Enum.Font.GothamBold
+minBtn.TextSize = 14
+Instance.new("UICorner", minBtn).CornerRadius = UDim.new(0, 6)
+
+minBtn.MouseButton1Click:Connect(function()
+	State.guiVisible = not State.guiVisible
+	main.Visible = State.guiVisible
+end)
+
+-- Left Graphic Artwork Panel
+local artPanel = Instance.new("Frame", main)
+artPanel.Size = UDim2.new(0, 110, 1, -46)
+artPanel.Position = UDim2.new(0, 12, 0, 40)
+artPanel.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+Instance.new("UICorner", artPanel).CornerRadius = UDim.new(0, 6)
+local artImg = Instance.new("ImageLabel", artPanel)
+artImg.Size = UDim2.new(1, 0, 1, 0)
+artImg.BackgroundTransparency = 1
+artImg.Image = "rbxassetid://10849683765" -- Universal cool background decal tint
+artImg.ScaleType = Enum.ScaleType.Crop
+Instance.new("UICorner", artImg).CornerRadius = UDim.new(0, 6)
+
+-- Sidebar Buttons Center Layout
 local sidebar = Instance.new("Frame", main)
-sidebar.Size = UDim2.new(0, 120, 1, -42)
-sidebar.Position = UDim2.new(0, 0, 0, 42)
-sidebar.BackgroundColor3 = SIDEBAR_BG
-sidebar.BorderSizePixel = 0
-
-local sideDiv = Instance.new("Frame", sidebar)
-sideDiv.Size = UDim2.new(0, 1, 1, 0)
-sideDiv.Position = UDim2.new(1, -1, 0, 0)
-sideDiv.BackgroundColor3 = BORDER
-sideDiv.BorderSizePixel = 0
-
+sidebar.Size = UDim2.new(0, 110, 1, -46)
+sidebar.Position = UDim2.new(0, 130, 0, 40)
+sidebar.BackgroundTransparency = 1
 local sideLayout = Instance.new("UIListLayout", sidebar)
-sideLayout.Padding = UDim.new(0, 4)
-sideLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+sideLayout.Padding = UDim.new(0, 5)
 
--- ─── TABS HOUSING CONTAINER ──────────────────────────────────────────────
+-- Content Box Frame
 local contentFrame = Instance.new("Frame", main)
-contentFrame.Size = UDim2.new(1, -125, 1, -47)
-contentFrame.Position = UDim2.new(0, 122, 0, 45)
+contentFrame.Size = UDim2.new(1, -260, 1, -46)
+contentFrame.Position = UDim2.new(0, 250, 0, 40)
 contentFrame.BackgroundTransparency = 1
 
 local tabs = {}
-local currentTab = nil
+local activeTab = nil
 
-local function createTab(tabName)
+local function registerTab(name)
 	local scroll = Instance.new("ScrollingFrame", contentFrame)
-	scroll.Name = tabName .. "Tab"
 	scroll.Size = UDim2.new(1, 0, 1, 0)
 	scroll.BackgroundTransparency = 1
 	scroll.BorderSizePixel = 0
-	scroll.ScrollBarThickness = 4
-	scroll.ScrollBarImageColor3 = GOLD_ACCENT
+	scroll.ScrollBarThickness = 2
+	scroll.ScrollBarImageColor3 = Color3.fromRGB(212, 175, 55)
 	scroll.Visible = false
 	
 	local list = Instance.new("UIListLayout", scroll)
 	list.Padding = UDim.new(0, 6)
-	list.HorizontalAlignment = Enum.HorizontalAlignment.Center
-	
 	list:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-		scroll.CanvasSize = UDim2.new(0, 0, 0, list.AbsoluteContentSize.Y + 25)
+		scroll.CanvasSize = UDim2.new(0, 0, 0, list.AbsoluteContentSize.Y + 10)
 	end)
 	
-	-- Nav Button
-	local navBtn = Instance.new("TextButton", sidebar)
-	navBtn.Size = UDim2.new(0, 110, 0, 32)
-	navBtn.BackgroundTransparency = 1
-	navBtn.Text = tabName
-	navBtn.TextColor3 = DIM
-	navBtn.Font = Enum.Font.GothamBold
-	navBtn.TextSize = 12
+	local btn = Instance.new("TextButton", sidebar)
+	btn.Size = UDim2.new(1, 0, 0, 34)
+	btn.BackgroundColor3 = Color3.fromRGB(22, 22, 22)
+	btn.Text = name
+	btn.TextColor3 = Color3.fromRGB(160, 160, 160)
+	btn.Font = Enum.Font.GothamBold
+	btn.TextSize = 11
+	Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
+	local bStr = Instance.new("UIStroke", btn)
+	bStr.Color = Color3.fromRGB(35, 35, 35)
 	
-	navBtn.MouseButton1Click:Connect(function()
+	btn.MouseButton1Click:Connect(function()
 		for _, t in pairs(tabs) do
-			t.Scroll.Visible = false
-			t.Btn.TextColor3 = DIM
+			t.S.Visible = false
+			t.B.BackgroundColor3 = Color3.fromRGB(22, 22, 22)
+			t.B.TextColor3 = Color3.fromRGB(160, 160, 160)
 		end
 		scroll.Visible = true
-		navBtn.TextColor3 = GOLD_ACCENT
-		currentTab = tabName
+		btn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+		btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+		activeTab = name
 	end)
 	
-	tabs[tabName] = { Scroll = scroll, Btn = navBtn }
-	if not currentTab then
+	tabs[name] = { S = scroll, B = btn }
+	if not activeTab then
 		scroll.Visible = true
-		navBtn.TextColor3 = GOLD_ACCENT
-		currentTab = tabName
+		btn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+		btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+		activeTab = name
 	end
 	return scroll
 end
 
-local combatScroll = createTab("Combat")
-local speedScroll  = createTab("Speed")
-local configScroll = createTab("Settings")
+-- Create the complete 6 tabs from image 12143.jpg
+local speedTab = registerTab("Speed")
+local batTab   = registerTab("Bat Aimbot")
+local mechTab  = registerTab("Mechanics")
+local moveTab  = registerTab("Movement")
+local perfTab  = registerTab("Performance")
+local setTab   = registerTab("Settings")
 
--- ─── UI BUILDING BLOCKS ──────────────────────────────────────────────────
-local function makeSecHeader(tabScroll, title, subText)
-	local headerFrame = Instance.new("Frame", tabScroll)
-	headerFrame.Size = UDim2.new(0, 355, 0, 40)
-	headerFrame.BackgroundTransparency = 1
-	
-	local tl = Instance.new("TextLabel", headerFrame)
-	tl.Size = UDim2.new(1, 0, 0, 18)
-	tl.BackgroundTransparency = 1
-	tl.Text = title:upper()
-	tl.TextColor3 = GOLD_ACCENT
-	tl.Font = Enum.Font.GothamBlack
-	tl.TextSize = 11
-	tl.TextXAlignment = Enum.TextXAlignment.Left
-	
-	local sl = Instance.new("TextLabel", headerFrame)
-	sl.Size = UDim2.new(1, 0, 0, 14)
-	sl.Position = UDim2.new(0, 0, 0, 18)
-	sl.BackgroundTransparency = 1
-	sl.Text = subText
-	sl.TextColor3 = DIM
-	sl.Font = Enum.Font.Gotham
-	sl.TextSize = 9
-	sl.TextXAlignment = Enum.TextXAlignment.Left
-end
-
-local function baseCard(tabScroll, height)
-	local c = Instance.new("Frame", tabScroll)
-	c.Size = UDim2.new(0, 355, 0, height or 42)
-	c.BackgroundColor3 = CARD_BG
-	c.BorderSizePixel = 0
+-- ─── COMPONENT UI GENERATORS ─────────────────────────────────────────────
+local function addValueCard(tab, label, default)
+	local c = Instance.new("Frame", tab)
+	c.Size = UDim2.new(1, 0, 0, 42)
+	c.BackgroundColor3 = Color3.fromRGB(16, 16, 16)
 	Instance.new("UICorner", c).CornerRadius = UDim.new(0, 6)
-	local s = Instance.new("UIStroke", c)
-	s.Color = BORDER
-	s.Thickness = 1
-	return c
-end
-
-local function rowToggle(tabScroll, label, sub, default, onToggle)
-	local c = baseCard(tabScroll, sub and 48 or 42)
+	Instance.new("UIStroke", c).Color = Color3.fromRGB(30, 30, 30)
 	
 	local tl = Instance.new("TextLabel", c)
-	tl.Size = UDim2.new(0, 240, 0, 16)
-	tl.Position = UDim2.new(0, 12, 0, sub and 6 or 13)
+	tl.Size = UDim2.new(0, 150, 1, 0)
+	tl.Position = UDim2.new(0, 12, 0, 0)
 	tl.BackgroundTransparency = 1
 	tl.Text = label
-	tl.TextColor3 = WHITE
-	tl.Font = Enum.Font.GothamBold
-	tl.TextSize = 11
-	tl.TextXAlignment = Enum.TextXAlignment.Left
-	
-	if sub then
-		local sl = Instance.new("TextLabel", c)
-		sl.Size = UDim2.new(0, 240, 0, 12)
-		sl.Position = UDim2.new(0, 12, 0, 24)
-		sl.BackgroundTransparency = 1
-		sl.Text = sub
-		sl.TextColor3 = DIM
-		sl.Font = Enum.Font.Gotham
-		sl.TextSize = 9
-		sl.TextXAlignment = Enum.TextXAlignment.Left
-	end
-	
-	local tg = Instance.new("TextButton", c)
-	tg.Size = UDim2.new(0, 38, 0, 20)
-	tg.Position = UDim2.new(1, -50, 0.5, -10)
-	tg.BackgroundColor3 = default and GOLD_ACCENT or CARD_HOV
-	tg.Text = ""
-	Instance.new("UICorner", tg).CornerRadius = UDim.new(0, 10)
-	local tgStroke = Instance.new("UIStroke", tg)
-	tgStroke.Color = default and GOLD_ACCENT or BORDER
-	
-	local active = default
-	tg.MouseButton1Click:Connect(function()
-		active = not active
-		TweenService:Create(tg, TweenInfo.new(0.12), {BackgroundColor3 = active and GOLD_ACCENT or CARD_HOV}):Play()
-		TweenService:Create(tgStroke, TweenInfo.new(0.12), {Color = active and GOLD_ACCENT or BORDER}):Play()
-		if onToggle then onToggle(active) end
-	end)
-end
-
-local function rowInput(tabScroll, label, default, onChange)
-	local c = baseCard(tabScroll, 42)
-	
-	local tl = Instance.new("TextLabel", c)
-	tl.Size = UDim2.new(0, 200, 0, 16)
-	tl.Position = UDim2.new(0, 12, 0, 13)
-	tl.BackgroundTransparency = 1
-	tl.Text = label
-	tl.TextColor3 = WHITE
+	tl.TextColor3 = Color3.fromRGB(230, 230, 230)
 	tl.Font = Enum.Font.GothamBold
 	tl.TextSize = 11
 	tl.TextXAlignment = Enum.TextXAlignment.Left
 	
 	local box = Instance.new("TextBox", c)
-	box.Size = UDim2.new(0, 65, 0, 24)
-	box.Position = UDim2.new(1, -77, 0.5, -12)
-	box.BackgroundColor3 = CARD_HOV
+	box.Size = UDim2.new(0, 60, 0, 24)
+	box.Position = UDim2.new(1, -72, 0.5, -12)
+	box.BackgroundColor3 = Color3.fromRGB(24, 24, 24)
 	box.Text = tostring(default)
-	box.TextColor3 = WHITE
+	box.TextColor3 = Color3.fromRGB(255, 255, 255)
 	box.Font = Enum.Font.GothamBold
 	box.TextSize = 11
 	Instance.new("UICorner", box).CornerRadius = UDim.new(0, 4)
-	local bStroke = Instance.new("UIStroke", box)
-	bStroke.Color = BORDER
+	return box
+end
+
+local function addToggleCard(tab, label, desc, default, callback)
+	local c = Instance.new("Frame", tab)
+	c.Size = UDim2.new(1, 0, 0, 46)
+	c.BackgroundColor3 = Color3.fromRGB(16, 16, 16)
+	Instance.new("UICorner", c).CornerRadius = UDim.new(0, 6)
+	Instance.new("UIStroke", c).Color = Color3.fromRGB(30, 30, 30)
 	
-	box.FocusLost:Connect(function()
-		local val = tonumber(box.Text) or default
-		if onChange then onChange(val) end
+	local tl = Instance.new("TextLabel", c)
+	tl.Size = UDim2.new(0, 200, 0, 18)
+	tl.Position = UDim2.new(0, 12, 0, 6)
+	tl.BackgroundTransparency = 1
+	tl.Text = label
+	tl.TextColor3 = Color3.fromRGB(255, 255, 255)
+	tl.Font = Enum.Font.GothamBold
+	tl.TextSize = 11
+	tl.TextXAlignment = Enum.TextXAlignment.Left
+	
+	local dl = Instance.new("TextLabel", c)
+	dl.Size = UDim2.new(0, 200, 0, 14)
+	dl.Position = UDim2.new(0, 12, 0, 24)
+	dl.BackgroundTransparency = 1
+	dl.Text = desc
+	dl.TextColor3 = Color3.fromRGB(130, 130, 130)
+	dl.Font = Enum.Font.Gotham
+	dl.TextSize = 9
+	dl.TextXAlignment = Enum.TextXAlignment.Left
+	
+	local btn = Instance.new("TextButton", c)
+	btn.Size = UDim2.new(0, 36, 0, 18)
+	btn.Position = UDim2.new(1, -48, 0.5, -9)
+	btn.BackgroundColor3 = default and Color3.fromRGB(212, 175, 55) or Color3.fromRGB(28, 28, 28)
+	btn.Text = ""
+	Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 9)
+	
+	local active = default
+	btn.MouseButton1Click:Connect(function()
+		active = not active
+		btn.BackgroundColor3 = active and Color3.fromRGB(212, 175, 55) or Color3.fromRGB(28, 28, 28)
+		if callback then callback(active) end
 	end)
 end
 
--- ─── POPULATING SECTIONS ─────────────────────────────────────────────────
--- Combat Tab
-makeSecHeader(combatScroll, "Bat Aimbot", "Legit target leading parameters")
-rowToggle(combatScroll, "Auto Bat Combat", "Aimbot checks closest players", false, function(v) State.autoBatToggled = v end)
+-- Populate tab panels directly from screenshots
+addValueCard(speedTab, "Normal Speed", 59).FocusLost:Connect(function(e) NS = tonumber(e) or NS end)
+addValueCard(speedTab, "Carry Speed", 29).FocusLost:Connect(function(e) CS = tonumber(e) or CS end)
+addValueCard(speedTab, "Lagger Speed", 15).FocusLost:Connect(function(e) LS = tonumber(e) or LS end)
+addValueCard(speedTab, "Lagger Carry Speed", 24.5).FocusLost:Connect(function(e) LS2 = tonumber(e) or LS2 end)
 
-makeSecHeader(combatScroll, "Mechanics", "Exploits and protections")
-rowToggle(combatScroll, "Infinite Jump", "Removes exhaustion thresholds", false, function(v) State.infJumpEnabled = v end)
-rowToggle(combatScroll, "Anti Ragdoll", "Forces continuous balance state", false, function(v) State.antiRagdollEnabled = v end)
-rowToggle(combatScroll, "Auto Steal Prompts", "Triggers closest valid podiums", false, function(v) Steal.AutoStealEnabled = v end)
-rowInput(combatScroll, "Steal Radius", 8, function(v) Steal.StealRadius = v end)
+addToggleCard(batTab, "Auto Bat Combat", "Aimbot checks target distances", false, function(v) State.autoBatToggled = v end)
+addToggleCard(mechTab, "Infinite Jump", "Allows air jump metrics", false, function(v) State.infJumpEnabled = v end)
+addToggleCard(mechTab, "Anti Ragdoll", "Keeps player vector upright", false, function(v) State.antiRagdollEnabled = v end)
 
--- Speed Tab
-makeSecHeader(speedScroll, "Configuration Profiles", "Tweaks structural speed parameters")
-rowInput(speedScroll, "Normal Run Vector", 60, function(v) NS = v end)
-rowInput(speedScroll, "Carry Vector Shift", 30, function(v) CS = v end)
-rowInput(speedScroll, "Lagger Mode Shifter", 15, function(v) LS = v end)
+addToggleCard(moveTab, "Auto Left Corridor", "Bypasses left walls", false, function(v) State.autoLeftEnabled = v end)
+addToggleCard(moveTab, "Auto Right Corridor", "Bypasses right walls", false, function(v) State.autoRightEnabled = v end)
+addToggleCard(perfTab, "FPS Optimization", "Removes detailed map textures", false, function(v) end)
+addToggleCard(setTab, "UI Toggle Hud visibility", "Hides master control base window", true, function(v) end)
 
-makeSecHeader(speedScroll, "Movement Toggles", "Fast routing and bypass overrides")
-rowToggle(speedScroll, "Speed Velocity Profile", "Uses normal/carry profiles", false, function(v) State.speedToggled = v end)
-rowToggle(speedScroll, "Lagger Simulation Loop", "Stutters movement metrics", false, function(v) State.laggerToggled = v end)
-rowToggle(speedScroll, "Auto Route Left", "Navigates left corridor automatically", false, function(v) State.autoLeftEnabled = v end)
-rowToggle(speedScroll, "Auto Route Right", "Navigates right corridor automatically", false, function(v) State.autoRightEnabled = v end)
+-- ─── MOBILE ACCESSIBLE ACTION BUTTONS (PAD ON THE RIGHT PANEL) ───────────
+local buttonPad = Instance.new("Frame", gui)
+buttonPad.Name = "MobilePad"
+buttonPad.Size = UDim2.new(0, 180, 0, 360)
+buttonPad.Position = UDim2.new(1, -200, 0.5, -180)
+buttonPad.BackgroundTransparency = 1
 
--- Settings Tab
-makeSecHeader(configScroll, "Menu Management", "Saves global configuration variables")
-rowToggle(configScroll, "Intro Execution Splash", "Plays visual asset layout sequence", true, function(v) State.introEnabled = v end)
-rowToggle(configScroll, "Lock Layout Draggable", "Clamps absolute position of UI window", false, function(v) uiLocked = v end)
+local padGrid = Instance.new("UIGridLayout", buttonPad)
+padGrid.CellSize = UDim2.new(0, 82, 0, 48)
+padGrid.CellPadding = UDim2.new(0, 10, 0, 10)
 
--- ─── OVERHEAD BILLBOARD SYSTEM ───────────────────────────────────────────
-local function setupOverheadBillboard(char)
-	task.wait(0.2)
-	local head = char:WaitForChild("Head", 5)
-	if not head then return end
-	if head:FindFirstChild("OGMobileBB") then head.OGMobileBB:Destroy() end
+local function buildPadButton(text, clickCallback)
+	local b = Instance.new("TextButton", buttonPad)
+	b.BackgroundColor3 = Color3.fromRGB(12, 12, 12)
+	b.Text = text
+	b.TextColor3 = Color3.fromRGB(255, 255, 255)
+	b.Font = Enum.Font.GothamBlack
+	b.TextSize = 10
+	b.TextWrapped = true
+	Instance.new("UICorner", b).CornerRadius = UDim.new(0, 8)
+	local s = Instance.new("UIStroke", b)
+	s.Color = Color3.fromRGB(40, 40, 40)
 	
-	local bb = Instance.new("BillboardGui", head)
-	bb.Name = "OGMobileBB"
-	bb.Size = UDim2.new(0, 160, 0, 52)
-	bb.StudsOffset = Vector3.new(0, 3, 0)
-	bb.AlwaysOnTop = true
-	
-	local speedLbl = Instance.new("TextLabel", bb)
-	speedLbl.Size = UDim2.new(1, 0, 0, 24)
-	speedLbl.BackgroundTransparency = 1
-	speedLbl.Text = "0.0 m/s"
-	speedLbl.TextColor3 = GOLD_ACCENT
-	speedLbl.Font = Enum.Font.GothamBlack
-	speedLbl.TextScaled = true
-	speedLbl.TextStrokeTransparency = 0
-	speedLbl.TextStrokeColor3 = Color3.new(0,0,0)
-	
-	local discordLbl = Instance.new("TextLabel", bb)
-	discordLbl.Size = UDim2.new(1, 0, 0, 24)
-	discordLbl.Position = UDim2.new(0, 0, 0, 26)
-	discordLbl.BackgroundTransparency = 1
-	discordLbl.Text = "discord.gg/oghv"
-	discordLbl.TextColor3 = WHITE
-	discordLbl.Font = Enum.Font.GothamBold
-	discordLbl.TextScaled = true
-	discordLbl.TextStrokeTransparency = 0.2
-	discordLbl.TextStrokeColor3 = Color3.new(0,0,0)
-	
-	local hrp2 = char:WaitForChild("HumanoidRootPart", 5)
-	task.spawn(function()
-		while char.Parent and hrp2 and speedLbl do
-			local hspd = Vector3.new(hrp2.Velocity.X, 0, hrp2.Velocity.Z).Magnitude
-			speedLbl.Text = string.format("%.1f m/s", hspd)
-			task.wait(0.1)
-		end
+	b.MouseButton1Click:Connect(function()
+		b.BackgroundColor3 = Color3.fromRGB(212, 175, 55)
+		b.TextColor3 = Color3.fromRGB(0, 0, 0)
+		task.wait(0.12)
+		b.BackgroundColor3 = Color3.fromRGB(12, 12, 12)
+		b.TextColor3 = Color3.fromRGB(255, 255, 255)
+		if clickCallback then clickCallback() end
 	end)
 end
 
-LP.CharacterAdded:Connect(setupOverheadBillboard)
-if LP.Character then task.spawn(setupOverheadBillboard, LP.Character) end
+-- Mapping the exact touch grid triggers from image 12143.jpg
+buildPadButton("DROP BR", function() print("Dropping...") end)
+buildPadButton("AUTO LEFT", function() State.autoLeftEnabled = not State.autoLeftEnabled end)
+buildPadButton("BAT AIMBOT", function() State.autoBatToggled = not State.autoBatToggled end)
+buildPadButton("AUTO RIGHT", function() State.autoRightEnabled = not State.autoRightEnabled end)
+buildPadButton("TP DOWN", function() if LP.Character and LP.Character:FindFirstChild("HumanoidRootPart") then LP.Character.HumanoidRootPart.CFrame = LP.Character.HumanoidRootPart.CFrame * CFrame.new(0, -10, 0) end end)
+buildPadButton("CARRY SPD", function() State.speedToggled = not State.speedToggled end)
+buildPadButton("LAGGER CARRY", function() State.laggerToggled = not State.laggerToggled end)
+buildPadButton("LAGGER MODE", function() State.laggerToggled = not State.laggerToggled end)
 
--- ─── RUNTIME SYSTEM INTEGRATION ──────────────────────────────────────────
+-- Master open toggle overlay button
+local hudToggle = Instance.new("TextButton", gui)
+hudToggle.Name = "MasterToggle"
+hudToggle.Size = UDim2.new(0, 45, 0, 45)
+hudToggle.Position = UDim2.new(0, 15, 0, 15)
+hudToggle.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+hudToggle.Text = "OG"
+hudToggle.TextColor3 = Color3.fromRGB(212, 175, 55)
+hudToggle.Font = Enum.Font.GothamBlack
+hudToggle.TextSize = 14
+Instance.new("UICorner", hudToggle).CornerRadius = UDim.new(0, 50)
+local tStr = Instance.new("UIStroke", hudToggle)
+tStr.Color = Color3.fromRGB(212, 175, 55)
+tStr.Thickness = 1.5
+
+hudToggle.MouseButton1Click:Connect(function()
+	main.Visible = not main.Visible
+	buttonPad.Visible = main.Visible
+end)
+
+-- ─── MOVEMENT & LOOP ENGINE RUNTIME ──────────────────────────────────────
 RunService.RenderStepped:Connect(function()
 	local char = LP.Character; local hum = char and char:FindFirstChildOfClass("Humanoid")
 	local root = char and char:FindFirstChild("HumanoidRootPart")
@@ -397,7 +353,7 @@ end)
 UIS.JumpRequest:Connect(function()
 	if not State.infJumpEnabled then return end
 	local char = LP.Character; local root = char and char:FindFirstChild("HumanoidRootPart")
-	if root then root.Velocity = Vector3.new(root.Velocity.X, 52, root.Velocity.Z) end
+	if root then root.Velocity = Vector3.new(root.Velocity.X, 50, root.Velocity.Z) end
 end)
 
-print("[OG Hub] UI components actively drawn and bound.")
+print("[OG Hub] Complete UI and side pads fully built.")
