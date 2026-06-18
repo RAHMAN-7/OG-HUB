@@ -247,8 +247,7 @@ local function showDiscordInProgressBar()
 	local originalSize = progressPct.TextSize
 	local originalAlign = progressPct.TextXAlignment
 
-	progressPct.Text = "discord.gg/WkTmWrXYh
-"
+	progressPct.Text = "discord.gg/WkTmWrXYh"
 	progressPct.TextColor3 = Color3.fromRGB(255, 255, 255)
 	progressPct.TextSize = 13
 	progressPct.TextXAlignment = Enum.TextXAlignment.Center
@@ -437,7 +436,7 @@ local function stopAutoTPDown()
 	if autoTPDownConn then task.cancel(autoTPDownConn); autoTPDownConn = nil end
 end
 
-for _, name in pairs({"OGHUBGUI"}) do
+for _, name in pairs({"OGHubGUI"}) do
 	local old = game:GetService("CoreGui"):FindFirstChild(name)
 	if old then old:Destroy() end
 	local pg = LP:FindFirstChild("PlayerGui")
